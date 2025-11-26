@@ -1,8 +1,8 @@
 import os
 
 # Configuración de Entrez
-ENTREZ_EMAIL = "lucianofranco.a@gmail.com"
-ENTREZ_API_KEY = "4579ad4ab4c2144aa84a340b2e4374111308"
+ENTREZ_EMAIL = ""
+ENTREZ_API_KEY = ""
 
 # Configuración del LLM
 OLLAMA_MODEL = "qwen2.5:14b"
