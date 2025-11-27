@@ -8,6 +8,7 @@ MAInr (Mining Agent for SRA) is an advanced tool designed to search, extract, an
 *   **Massive Mining**: Capable of processing thousands of SRA records, handling pagination and data retrieval efficiently.
 *   **Contextual Analysis**: Analyzes metadata for each BioProject using LLMs to extract key information such as experimental conditions, studied tissues, and whether it is a time series.
 *   **Parallel Processing**: Uses threads to analyze multiple projects simultaneously, speeding up the mining process.
+*   **Hardware Detection**: Automatically detects available GPUs and recommends optimal concurrency settings.
 *   **Structured Output**: Generates CSV files with all collected and analyzed information ready for use.
 
 ## Requirements

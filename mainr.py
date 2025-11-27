@@ -41,8 +41,44 @@ def main():
         os.makedirs(args.output_dir)
         print(f"Directory created: {args.output_dir}")
     
+    # Hardware Detection and Configuration
+    from src.utils.hardware import get_gpu_info, estimate_max_workers
+    
+    print("\n--- Hardware Detection ---")
+    gpus = get_gpu_info()
+    num_workers = args.num_workers
+    
+    if gpus:
+        print(f"Detected {len(gpus)} GPUs:")
+        total_free_mem = 0
+        for i, gpu in enumerate(gpus):
+            print(f"  GPU {i}: {gpu['name']} | Free VRAM: {gpu['free_memory_mb']} MB / {gpu['total_memory_mb']} MB")
+            total_free_mem += gpu['free_memory_mb']
+            
+        # Estimate based on ~2GB per concurrent stream (assuming model is loaded and shared, mainly KV cache cost)
+        # This is a heuristic. Qwen2.5:14b needs ~9GB base.
+        # If we assume model is loaded once, extra streams are cheaper.
+        recommended_workers = estimate_max_workers(gpus, model_size_gb=2.5) 
+        
+        print(f"\nTotal Free VRAM: {total_free_mem} MB")
+        print(f"Recommended concurrent workers (threads): {recommended_workers}")
+        
+        try:
+            user_input = input(f"Enter number of workers to use [Default: {recommended_workers}]: ")
+            if user_input.strip():
+                num_workers = int(user_input)
+            else:
+                num_workers = recommended_workers
+        except ValueError:
+            print("Invalid input. Using default.")
+            num_workers = recommended_workers
+    else:
+        print("No NVIDIA GPUs detected via nvidia-smi. Using CPU or default settings.")
+        
+    print(f"Using {num_workers} concurrent workers.")
+
     pipeline = Pipeline(ollama_threads=args.ollama_threads)
-    results = pipeline.run(topic, max_workers=args.num_workers)
+    results = pipeline.run(topic, max_workers=num_workers)
     
     if results:
         df = pd.DataFrame(results)
