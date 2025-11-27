@@ -78,21 +78,14 @@ Devuelve SOLO el JSON.
         """
         Núcleo 3: Formatear y contextualizar BioProject usando Mistral.
         """
+        from src.llm.prompts import get_analysis_prompt
+        
         # Construir representación de texto para el LLM
         text_data = "\n".join([f"{k}: {v}" for k, v in metadata.items()])
         
-        system_prompt = """Eres un asistente de bioinformática. 
-        Analiza los metadatos del estudio SRA proporcionados.
-        Devuelve un objeto JSON con las siguientes claves:
-        - experimental_conditions: lista de cadenas (tratamientos/condiciones)
-        - is_time_series: booleano
-        - tissues_studied: lista de cadenas
-        - summary: un resumen breve de 1 oración del contexto del estudio
-        """
+        system_prompt, user_prompt = get_analysis_prompt(text_data)
         
-        prompt = f"""Analiza este estudio:\n\n{text_data}"""
-        
-        response = self.llm.generate_response(prompt, system_prompt=system_prompt, json_mode=True)
+        response = self.llm.generate_response(user_prompt, system_prompt=system_prompt, json_mode=True)
         
         try:
             return json.loads(response)
