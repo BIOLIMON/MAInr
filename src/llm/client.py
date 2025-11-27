@@ -12,7 +12,7 @@ class LLMClient:
 
     def generate_response(self, prompt, system_prompt=None, json_mode=False):
         """
-        Genera una respuesta del LLM.
+        Generates a response from the LLM.
         """
         messages = []
         if system_prompt:
@@ -24,9 +24,9 @@ class LLMClient:
         if self.num_threads:
             options['num_thread'] = self.num_threads
         
-        # Nota: El cliente python de Ollama podría manejar format='json' de manera diferente dependiendo de la versión.
-        # Por ahora confiaremos en el prompt para solicitar JSON si es necesario,
-        # pero podemos pasar format='json' si la librería lo soporta.
+        # Note: The Ollama python client might handle format='json' differently depending on the version.
+        # For now we rely on the prompt to request JSON if needed,
+        # but we can pass format='json' if the library supports it.
         kwargs = {
             'model': self.model,
             'messages': messages,
@@ -41,5 +41,5 @@ class LLMClient:
             response = client.chat(**kwargs)
             return response['message']['content']
         except Exception as e:
-            print(f"Error comunicandose con el LLM: {e}")
+            print(f"Error communicating with LLM: {e}")
             return None

@@ -1,6 +1,7 @@
 import json
+from Bio import Entrez
 from src.llm.client import LLMClient
-from src.sra.search import search_sra, fetch_summary
+from src.sra.search import search_sra, fetch_summary, safe_esearch
 from src.utils.xml_parser import parse_sra_xml
 
 class Pipeline:
@@ -11,16 +12,26 @@ class Pipeline:
 
     def generate_query(self, topic):
         """
-        Núcleo 1: Generar consulta de búsqueda SRA usando Mistral.
+        Core 1: Generate SRA search query using LLM.
         """
-        print(f"Generando consulta de busqueda para el tema: {topic}...")
+        print(f"Generating search query for topic: {topic}...")
         
         keywords = topic
+        
+        # Expand query with synonyms
+        from src.query.expander import QueryExpander
+        expander = QueryExpander()
+        expanded_concepts = expander.expand_query_string(keywords)
+        
+        expansion_text = ""
+        if expanded_concepts:
+            expansion_text = "\nSYNONYM SUGGESTIONS (Use if applicable):\n" + "\n".join(expanded_concepts) + "\n"
         
         prompt = f"""
 Eres un asistente experto en bioinformática especializado en minería de datos de NCBI SRA.
 Tu objetivo es generar una estrategia de búsqueda de **ALTO RECALL** (alta recuperación) para el tema: "{keywords}".
 
+{expansion_text}
 Queremos encontrar la MAYOR cantidad posible de estudios relevantes, incluso si eso implica algo de ruido.
 Es preferible traer 10,000 resultados y filtrar después, que traer 0 por ser demasiado específico.
 
@@ -43,44 +54,70 @@ Ejemplo de salida válida:
 Devuelve SOLO el JSON.
 """
         
-        # Desactivamos el modo json estricto en la llamada al cliente para evitar posibles problemas con la gramática forzada de Ollama
-        # si tiene problemas con el escape complejo. Lo analizaremos manualmente.
+        # Disable strict json mode to handle complex escapes manually if needed
         response = self.llm.generate_response(prompt, json_mode=True)
         
         if not response:
             return None
 
         try:
-            # Intento 1: Carga directa de JSON
+            # Attempt 1: Direct JSON load
             data = json.loads(response)
         except json.JSONDecodeError:
-            # Intento 2: Intentar arreglar problemas comunes de escape o encontrar el bloque JSON
+            # Attempt 2: Try to fix common escape issues or find JSON block
             import re
             try:
-                # Encontrar el primer { y el último }
+                # Find first { and last }
                 match = re.search(r'\{.*\}', response, re.DOTALL)
                 if match:
                     json_str = match.group(0)
-                    # A veces los modelos olvidan escapar comillas dentro del valor
-                    # Este es un problema difícil de arreglar perfectamente con regex, pero podemos intentarlo
                     data = json.loads(json_str)
                 else:
-                    raise ValueError("No se encontró bloque JSON")
+                    raise ValueError("No JSON block found")
             except Exception as e:
-                print(f"Error analizando JSON de consulta: {e}")
-                print(f"Respuesta cruda: {response}")
+                print(f"Error parsing query JSON: {e}")
+                print(f"Raw response: {response}")
                 return None
 
-        print(f"Consulta Natural: {data.get('natural_query')}")
+        print(f"Natural Query: {data.get('natural_query')}")
         return data.get('esearch_query')
+
+    def enrich_metadata(self, metadata):
+        """
+        Fetches additional counts (SRA Experiments, BioSamples) for the BioProject.
+        """
+        bioproject = metadata.get('bioproject')
+        if not bioproject:
+            return metadata
+            
+        try:
+            # Count SRA Experiments
+            # We search SRA for the BioProject accession
+            result = safe_esearch(db="sra", term=bioproject, retmax=0)
+            metadata['sra_experiment_count'] = int(result['Count'])
+            
+            # Count BioSamples
+            # We search BioSample for the BioProject accession
+            result = safe_esearch(db="biosample", term=bioproject, retmax=0)
+            metadata['biosample_count'] = int(result['Count'])
+            
+        except Exception as e:
+            print(f"Error fetching counts for {bioproject}: {e}")
+            metadata['sra_experiment_count'] = 0
+            metadata['biosample_count'] = 0
+            
+        return metadata
 
     def analyze_bioproject(self, metadata):
         """
-        Núcleo 3: Formatear y contextualizar BioProject usando Mistral.
+        Core 3: Format and contextualize BioProject using LLM.
         """
         from src.llm.prompts import get_analysis_prompt
         
-        # Construir representación de texto para el LLM
+        # Enrich with counts first
+        metadata = self.enrich_metadata(metadata)
+        
+        # Build text representation for LLM
         text_data = "\n".join([f"{k}: {v}" for k, v in metadata.items()])
         
         system_prompt, user_prompt = get_analysis_prompt(text_data)
@@ -90,33 +127,33 @@ Devuelve SOLO el JSON.
         try:
             return json.loads(response)
         except:
-            print(f"Fallo el analisis de la respuesta JSON del LLM para {metadata.get('bioproject')}")
+            print(f"Failed to parse LLM JSON response for {metadata.get('bioproject')}")
             return {}
 
     def run(self, topic, max_workers=15):
         from config.settings import TARGET_PROJECTS, BATCH_SIZE
         import concurrent.futures
         
-        # 1. Generar Consulta
+        # 1. Generate Query
         query = self.generate_query(topic)
         if not query:
-            print("Fallo la generacion de la consulta.")
+            print("Query generation failed.")
             return
         
-        print(f"Consulta Generada: {query}")
+        print(f"Generated Query: {query}")
         
-        # Bucle de Paginación
+        # Pagination Loop
         retstart = 0
         total_found = 0
         
         while len(self.bioprojects_seen) < TARGET_PROJECTS:
-            print(f"\nObteniendo lote comenzando en {retstart} (Objetivo Proyectos Unicos: {TARGET_PROJECTS})...")
+            print(f"\nFetching batch starting at {retstart} (Target Unique Projects: {TARGET_PROJECTS})...")
             
-            # 2. Buscar en SRA (Lote)
+            # 2. Search SRA (Batch)
             search_result = search_sra(query, retstart=retstart, retmax=BATCH_SIZE)
             
             if not search_result or 'IdList' not in search_result:
-                print("La busqueda fallo o no hay mas resultados.")
+                print("Search failed or no more results.")
                 break
                 
             id_list = search_result['IdList']
@@ -124,19 +161,19 @@ Devuelve SOLO el JSON.
             total_found = count
             
             if not id_list:
-                print("No se devolvieron mas IDs en este lote.")
+                print("No more IDs returned in this batch.")
                 break
                 
-            print(f"El lote contiene {len(id_list)} registros. Total disponible: {count}")
+            print(f"Batch contains {len(id_list)} records. Total available: {count}")
 
-            # 3. Procesar y Filtrar en Sub-Lotes
-            # Obtener resúmenes en trozos de 200 para evitar problemas de longitud de URL o tiempos de espera
+            # 3. Process and Filter in Sub-Batches
+            # Fetch summaries in chunks of 200 to avoid URL length issues or timeouts
             chunk_size = 200
             new_unique_records = []
             
             for i in range(0, len(id_list), chunk_size):
                 chunk_ids = id_list[i:i+chunk_size]
-                print(f"   Obteniendo resumenes para registros {i}-{i+len(chunk_ids)}...")
+                print(f"   Fetching summaries for records {i}-{i+len(chunk_ids)}...")
                 
                 summary_list = fetch_summary(chunk_ids)
                 if not summary_list:
@@ -146,7 +183,7 @@ Devuelve SOLO el JSON.
                     if "ExpXml" not in study_summary:
                         continue
 
-                    # Analizar XML
+                    # Parse XML
                     runs_xml = study_summary.get("Runs", None)
                     metadata = parse_sra_xml(study_summary["ExpXml"], runs_xml_string=runs_xml)
                     if not metadata:
@@ -154,7 +191,7 @@ Devuelve SOLO el JSON.
 
                     bioproject = metadata.get('bioproject')
                     
-                    # Filtro: BioProjects Únicos
+                    # Filter: Unique BioProjects
                     if bioproject in self.bioprojects_seen:
                         continue
                     
@@ -167,11 +204,11 @@ Devuelve SOLO el JSON.
                 if len(self.bioprojects_seen) >= TARGET_PROJECTS:
                     break
 
-            print(f"   Encontrados {len(new_unique_records)} nuevos BioProjects unicos en este lote.")
+            print(f"   Found {len(new_unique_records)} new unique BioProjects in this batch.")
 
-            # 4. Análisis LLM Paralelo
+            # 4. Parallel LLM Analysis
             if new_unique_records:
-                print(f"   Analizando {len(new_unique_records)} proyectos en paralelo con {max_workers} hilos...")
+                print(f"   Analyzing {len(new_unique_records)} projects in parallel with {max_workers} threads...")
                 
                 with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
                     future_to_meta = {executor.submit(self.analyze_bioproject, meta): meta for meta in new_unique_records}
@@ -182,21 +219,21 @@ Devuelve SOLO el JSON.
                             analysis = future.result()
                             full_record = {**meta, **analysis}
                             self.results.append(full_record)
-                            print(f"      Analizado: {meta.get('bioproject')}")
+                            print(f"      Analyzed: {meta.get('bioproject')}")
                         except Exception as exc:
-                            print(f"      Error analizando {meta.get('bioproject')}: {exc}")
+                            print(f"      Error analyzing {meta.get('bioproject')}: {exc}")
 
-            # Verificar si procesamos todos los resultados disponibles
+            # Check if we processed all available results
             if retstart + len(id_list) >= count:
-                print("Se alcanzo el final de los resultados de busqueda.")
+                print("Reached end of search results.")
                 break
                 
-            # Verificar si alcanzamos el objetivo
+            # Check if target reached
             if len(self.bioprojects_seen) >= TARGET_PROJECTS:
-                print(f"Objetivo de {TARGET_PROJECTS} BioProjects unicos alcanzado!")
+                print(f"Target of {TARGET_PROJECTS} unique BioProjects reached!")
                 break
                 
-            # Mover al siguiente lote
+            # Move to next batch
             retstart += len(id_list)
             
         return self.results

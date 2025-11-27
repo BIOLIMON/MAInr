@@ -2,8 +2,8 @@ import xml.etree.ElementTree as ET
 
 def parse_sra_xml(exp_xml_string, runs_xml_string=None):
     """
-    Analiza la cadena ExpXml del resumen SRA y devuelve un diccionario de campos.
-    Devuelve None si el análisis falla.
+    Parses the ExpXml string from SRA summary and returns a dictionary of fields.
+    Returns None if parsing fails.
     """
     if not exp_xml_string:
         return None
@@ -13,12 +13,12 @@ def parse_sra_xml(exp_xml_string, runs_xml_string=None):
     try:
         root = ET.fromstring(wrapped_xml)
     except ET.ParseError as e:
-        print(f"Error analizando XML: {e}")
+        print(f"Error parsing XML: {e}")
         return None
 
     data = {}
     
-    # Extraer campos
+    # Extract fields
     data['bioproject'] = root.findtext(".//Bioproject", "")
     data['title'] = root.findtext(".//Title", "")
     data['platform'] = root.findtext(".//Platform", "")
@@ -44,21 +44,20 @@ def parse_sra_xml(exp_xml_string, runs_xml_string=None):
         else "SINGLE"
     )
     
-    data['tissue'] = root.findtext(".//LIBRARY_NAME", "")
     data['biosample'] = root.findtext(".//Biosample", "")
     
-    # Procesar Runs si estan disponibles
+    # Process Runs if available
     runs = []
     if runs_xml_string:
         try:
-            # Runs XML suele venir como <Run .../><Run .../>, asi que lo envolvemos
+            # Runs XML usually comes as <Run .../><Run .../>, so we wrap it
             runs_root = ET.fromstring(f"<Runs>{runs_xml_string}</Runs>")
             for run in runs_root.findall("Run"):
                 acc = run.attrib.get("acc")
                 if acc:
                     runs.append(acc)
         except ET.ParseError:
-            pass # Ignoramos errores en runs por ahora
+            pass # Ignore errors in runs for now
             
     data['run_accessions'] = ",".join(runs)
     

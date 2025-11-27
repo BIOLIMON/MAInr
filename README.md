@@ -1,118 +1,118 @@
-# MAInr - Agente de Minería de Datos SRA
+# MAInr - SRA Data Mining Agent
 
-MAInr (Mining Agent for SRA) es una herramienta avanzada diseñada para buscar, extraer y analizar metadatos de la base de datos Sequence Read Archive (SRA) del NCBI. Utiliza Modelos de Lenguaje Grande (LLMs) para generar estrategias de búsqueda inteligentes y analizar el contexto de los estudios encontrados.
+MAInr (Mining Agent for SRA) is an advanced tool designed to search, extract, and analyze metadata from the NCBI Sequence Read Archive (SRA) database. It uses Large Language Models (LLMs) to generate intelligent search strategies and analyze the context of found studies.
 
-## Características
+## Features
 
-*   **Búsqueda Inteligente**: Genera consultas de búsqueda complejas y de alto recall utilizando modelos LLM (Mistral/Qwen) para asegurar que no se pierdan estudios relevantes.
-*   **Minería Masiva**: Capaz de procesar miles de registros de SRA, manejando la paginación y la recuperación de datos de manera eficiente.
-*   **Análisis Contextual**: Analiza los metadatos de cada BioProject utilizando LLMs para extraer información clave como condiciones experimentales, tejidos estudiados y si es una serie temporal.
-*   **Procesamiento Paralelo**: Utiliza hilos para analizar múltiples proyectos simultáneamente, acelerando el proceso de minería.
-*   **Salida Estructurada**: Genera archivos CSV con toda la información recopilada y analizada lista para su uso.
+*   **Intelligent Search**: Generates complex, high-recall search queries using LLM models (Mistral/Qwen) to ensure relevant studies are not missed.
+*   **Massive Mining**: Capable of processing thousands of SRA records, handling pagination and data retrieval efficiently.
+*   **Contextual Analysis**: Analyzes metadata for each BioProject using LLMs to extract key information such as experimental conditions, studied tissues, and whether it is a time series.
+*   **Parallel Processing**: Uses threads to analyze multiple projects simultaneously, speeding up the mining process.
+*   **Structured Output**: Generates CSV files with all collected and analyzed information ready for use.
 
-## Requisitos
+## Requirements
 
 *   Python 3.8+
-*   Acceso a internet (para conectar con NCBI Entrez)
-*   Una instancia de Ollama corriendo localmente (o accesible por red) con el modelo configurado (por defecto `qwen2.5:14b`).
+*   Internet access (to connect to NCBI Entrez)
+*   An Ollama instance running locally (or accessible via network) with the configured model (default `qwen2.5:14b`).
 
-## Instalación
+## Installation
 
-1.  Clona este repositorio:
+1.  Clone this repository:
     ```bash
-    git clone <url-del-repositorio>
+    git clone <repository-url>
     cd MAInr
     ```
 
-2.  Instala las dependencias:
+2.  Install dependencies:
     ```bash
     pip install -r requirements.txt
     ```
 
-3.  Configura Ollama:
-    Asegúrate de tener Ollama instalado y ejecutándose.
+3.  Configure Ollama:
+    Make sure Ollama is installed and running.
     ```bash
     ollama serve
     ```
-    Y descarga el modelo necesario:
+    And download the necessary model:
     ```bash
     ollama pull qwen2.5:14b
     ```
 
-## Configuración
- 
-### Credenciales NCBI Entrez
- 
-Para usar la API de NCBI, necesitas proporcionar un correo electrónico (requerido) y opcionalmente una API Key. Puedes hacerlo de dos formas:
- 
-1.  **Variables de Entorno**:
-    Establece las variables `ENTREZ_EMAIL` y `ENTREZ_API_KEY` en tu sistema.
+## Configuration
+
+### NCBI Entrez Credentials
+
+To use the NCBI API, you need to provide an email (required) and optionally an API Key. You can do this in two ways:
+
+1.  **Environment Variables**:
+    Set the `ENTREZ_EMAIL` and `ENTREZ_API_KEY` variables in your system.
     ```bash
-    export ENTREZ_EMAIL="tu_email@ejemplo.com"
-    export ENTREZ_API_KEY="tu_api_key"
+    export ENTREZ_EMAIL="your_email@example.com"
+    export ENTREZ_API_KEY="your_api_key"
     ```
- 
-2.  **Argumentos de Línea de Comandos**:
-    Pásalos al ejecutar el script:
+
+2.  **Command Line Arguments**:
+    Pass them when running the script:
     ```bash
-    python3 mainr.py --email "tu_email@ejemplo.com" --api-key "tu_api_key" ...
+    python3 mainr.py --email "your_email@example.com" --api-key "your_api_key" ...
     ```
- 
-### Otras Configuraciones
- 
-El archivo `config/settings.py` contiene otras configuraciones por defecto que pueden ser sobreescritas por variables de entorno o modificando el archivo:
- 
-*   **OLLAMA_MODEL**: El modelo de Ollama a utilizar (default: `qwen2.5:14b`).
-*   **OLLAMA_URL**: URL de la instancia de Ollama (default: `http://localhost:11434`).
-*   **TARGET_PROJECTS**: Número objetivo de proyectos únicos a recuperar.
-*   **BATCH_SIZE**: Tamaño del lote para las búsquedas en SRA.
 
-## Uso
- 
- Ejecuta el script principal desde la terminal pasando los argumentos necesarios:
- 
- ```bash
- python3 mainr.py "tema de investigación" [opciones]
- ```
- 
- ### Argumentos
- 
- *   `topic`: El tema de investigación (ej. "drought stress in tomato"). Si no se proporciona, el sistema lo pedirá interactivamente.
- *   `-O`, `--output-dir`: Directorio donde se guardarán los resultados (por defecto: directorio actual).
- *   `-n`, `--num-workers`: Número de hilos para el procesamiento paralelo de análisis (por defecto: 15).
- *   `-t`, `--ollama-threads`: Número de hilos que utilizará Ollama para la inferencia (opcional).
- 
- ### Ejemplos
- 
- **Uso básico:**
- ```bash
- python3 mainr.py "drought stress in tomato"
- ```
- 
- **Especificando directorio de salida y más hilos de trabajo:**
- ```bash
- python3 mainr.py "heat stress in arabidopsis" -O ./resultados -n 20
- ```
- 
- **Controlando hilos de Ollama:**
- ```bash
- python3 mainr.py "cold stress in maize" -t 4
- ```
- 
- ## Estructura del Proyecto
- 
- *   `mainr.py`: Punto de entrada de la aplicación (CLI).
-*   `config/`: Archivos de configuración.
-*   `src/`: Código fuente.
-    *   `llm/`: Cliente para interactuar con Ollama.
-    *   `processing/`: Lógica principal del pipeline de procesamiento.
-    *   `sra/`: Funciones para buscar y recuperar datos de NCBI SRA.
-    *   `utils/`: Utilidades varias, incluyendo el parser de XML.
+### Other Configurations
 
-## Contribución
+The `config/settings.py` file contains other default configurations that can be overridden by environment variables or by modifying the file:
 
-¡Las contribuciones son bienvenidas! Por favor, abre un issue o envía un pull request para mejoras o correcciones.
+*   **OLLAMA_MODEL**: The Ollama model to use (default: `qwen2.5:14b`).
+*   **OLLAMA_URL**: URL of the Ollama instance (default: `http://localhost:11434`).
+*   **TARGET_PROJECTS**: Target number of unique projects to retrieve.
+*   **BATCH_SIZE**: Batch size for SRA searches.
 
-## Licencia
+## Usage
+
+Execute the main script from the terminal passing the necessary arguments:
+
+```bash
+python3 mainr.py "research topic" [options]
+```
+
+### Arguments
+
+*   `topic`: The research topic (e.g., "drought stress in tomato"). If not provided, the system will ask interactively.
+*   `-O`, `--output-dir`: Directory where results will be saved (default: current directory).
+*   `-n`, `--num-workers`: Number of threads for parallel analysis processing (default: 15).
+*   `-t`, `--ollama-threads`: Number of threads Ollama will use for inference (optional).
+
+### Examples
+
+**Basic usage:**
+```bash
+python3 mainr.py "drought stress in tomato"
+```
+
+**Specifying output directory and more worker threads:**
+```bash
+python3 mainr.py "heat stress in arabidopsis" -O ./results -n 20
+```
+
+**Controlling Ollama threads:**
+```bash
+python3 mainr.py "cold stress in maize" -t 4
+```
+
+## Project Structure
+
+*   `mainr.py`: Application entry point (CLI).
+*   `config/`: Configuration files.
+*   `src/`: Source code.
+    *   `llm/`: Client for interacting with Ollama.
+    *   `processing/`: Main processing pipeline logic.
+    *   `sra/`: Functions to search and retrieve data from NCBI SRA.
+    *   `utils/`: Various utilities, including the XML parser.
+
+## Contribution
+
+Contributions are welcome! Please open an issue or send a pull request for improvements or corrections.
+
+## License
 
 [MIT](LICENSE)

@@ -6,19 +6,19 @@ from src.processing.pipeline import Pipeline
 from config.settings import ENTREZ_EMAIL, ENTREZ_API_KEY
 
 def main():
-    parser = argparse.ArgumentParser(description="MAInr - Agente de Minería SRA")
-    parser.add_argument("topic", nargs="?", help="Tema de investigación (ej., 'drought stress in tomato')")
-    parser.add_argument("-O", "--output-dir", default=".", help="Directorio de salida para los resultados")
-    parser.add_argument("-n", "--num-workers", type=int, default=15, help="Número de hilos para procesamiento paralelo (default: 15)")
-    parser.add_argument("-t", "--ollama-threads", type=int, default=None, help="Número de hilos para Ollama (opcional)")
-    parser.add_argument("--email", default=ENTREZ_EMAIL, help="Correo electrónico para NCBI Entrez")
-    parser.add_argument("--api-key", default=ENTREZ_API_KEY, help="Clave API para NCBI Entrez")
+    parser = argparse.ArgumentParser(description="MAInr - SRA Mining Agent")
+    parser.add_argument("topic", nargs="?", help="Research topic (e.g., 'drought stress in tomato')")
+    parser.add_argument("-O", "--output-dir", default=".", help="Output directory for results")
+    parser.add_argument("-n", "--num-workers", type=int, default=15, help="Number of threads for parallel processing (default: 15)")
+    parser.add_argument("-t", "--ollama-threads", type=int, default=None, help="Number of threads for Ollama (optional)")
+    parser.add_argument("--email", default=ENTREZ_EMAIL, help="Email for NCBI Entrez")
+    parser.add_argument("--api-key", default=ENTREZ_API_KEY, help="API Key for NCBI Entrez")
     
     args = parser.parse_args()
 
-    print("Iniciando MAInr - Agente de Mineria SRA")
+    print("Starting MAInr - SRA Mining Agent")
     
-    # Configurar Entrez
+    # Configure Entrez
     if args.email:
         Entrez.email = args.email
     
@@ -26,20 +26,20 @@ def main():
         Entrez.api_key = args.api_key
         
     if not Entrez.email:
-        print("Error: Se requiere un correo electronico para usar NCBI Entrez.")
-        print("  Usa el argumento --email o establece la variable de entorno ENTREZ_EMAIL.")
+        print("Error: An email is required to use NCBI Entrez.")
+        print("  Use the --email argument or set the ENTREZ_EMAIL environment variable.")
         return
     
     topic = args.topic
     if not topic:
-        topic = input("Introduce el tema de investigación (ej., 'drought stress in tomato'): ")
+        topic = input("Enter research topic (e.g., 'drought stress in tomato'): ")
         if not topic:
-            topic = "drought stress in tomato" # Por defecto
+            topic = "drought stress in tomato" # Default
 
-    # Crear directorio de salida si no existe
+    # Create output directory if it doesn't exist
     if args.output_dir and not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
-        print("Directorio creado: {args.output_dir}")
+        print(f"Directory created: {args.output_dir}")
     
     pipeline = Pipeline(ollama_threads=args.ollama_threads)
     results = pipeline.run(topic, max_workers=args.num_workers)
@@ -49,10 +49,10 @@ def main():
         filename = f"MAInr_results_{topic.replace(' ', '_')}.csv"
         output_path = os.path.join(args.output_dir, filename)
         df.to_csv(output_path, index=False)
-        print(f"\nListo! Resultados guardados en {output_path}")
+        print(f"\nDone! Results saved to {output_path}")
         print(df[['bioproject', 'title', 'summary']].head())
     else:
-        print("\nNo se generaron resultados.")
+        print("\nNo results generated.")
 
 if __name__ == "__main__":
     main()
