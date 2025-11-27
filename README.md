@@ -127,6 +127,8 @@ The generated CSV file contains the following key columns:
 *   **total_spots**: Total number of reads/spots.
 *   **total_bases**: Total number of bases sequenced.
 
+You can find a sample output file here: [examples/example_output.csv](examples/example_output.csv)
+
 ## Contribution
 
 Contributions are welcome! Please open an issue or send a pull request for improvements or corrections.
