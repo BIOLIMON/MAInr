@@ -1,8 +1,10 @@
 from Bio import Entrez
 from config.settings import ENTREZ_EMAIL, ENTREZ_API_KEY, BATCH_SIZE
 
-Entrez.email = ENTREZ_EMAIL
-Entrez.api_key = ENTREZ_API_KEY
+if ENTREZ_EMAIL:
+    Entrez.email = ENTREZ_EMAIL
+if ENTREZ_API_KEY:
+    Entrez.api_key = ENTREZ_API_KEY
 
 def search_sra(query, retstart=0, retmax=BATCH_SIZE):
     """

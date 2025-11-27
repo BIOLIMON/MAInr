@@ -13,7 +13,7 @@ def parse_sra_xml(exp_xml_string):
     try:
         root = ET.fromstring(wrapped_xml)
     except ET.ParseError as e:
-        print(f"❌ Error analizando XML: {e}")
+        print(f"Error analizando XML: {e}")
         return None
 
     data = {}
