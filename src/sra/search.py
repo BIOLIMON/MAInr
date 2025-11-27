@@ -1,11 +1,18 @@
 from Bio import Entrez
 from config.settings import ENTREZ_EMAIL, ENTREZ_API_KEY, BATCH_SIZE
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import urllib.error
 
 if ENTREZ_EMAIL:
     Entrez.email = ENTREZ_EMAIL
 if ENTREZ_API_KEY:
     Entrez.api_key = ENTREZ_API_KEY
 
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=4, max=60),
+    retry=retry_if_exception_type((urllib.error.URLError, urllib.error.HTTPError, RuntimeError))
+)
 def search_sra(query, retstart=0, retmax=BATCH_SIZE):
     """
     Busca en la base de datos SRA y devuelve la lista de IDs.
@@ -22,9 +29,14 @@ def search_sra(query, retstart=0, retmax=BATCH_SIZE):
         handle.close()
         return results
     except Exception as e:
-        print(f"Error buscando en SRA: {e}")
-        return None
+        print(f"Error buscando en SRA (intento fallido): {e}")
+        raise # Re-raise para que tenacity lo capture
 
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=4, max=60),
+    retry=retry_if_exception_type((urllib.error.URLError, urllib.error.HTTPError, RuntimeError))
+)
 def fetch_summary(id_list):
     """
     Obtiene resúmenes para una lista de IDs (o un solo ID).
@@ -39,5 +51,5 @@ def fetch_summary(id_list):
         handle.close()
         return summary
     except Exception as e:
-        print(f"Error obteniendo resumen para ID {id_list}: {e}")
-        return None
+        print(f"Error obteniendo resumen para ID {id_list} (intento fallido): {e}")
+        raise # Re-raise para que tenacity lo capture

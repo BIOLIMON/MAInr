@@ -154,7 +154,8 @@ Devuelve SOLO el JSON.
                         continue
 
                     # Analizar XML
-                    metadata = parse_sra_xml(study_summary["ExpXml"])
+                    runs_xml = study_summary.get("Runs", None)
+                    metadata = parse_sra_xml(study_summary["ExpXml"], runs_xml_string=runs_xml)
                     if not metadata:
                         continue
 
