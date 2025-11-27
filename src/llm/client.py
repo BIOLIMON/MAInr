@@ -1,15 +1,13 @@
 import ollama
-from config.settings import OLLAMA_MODEL, OLLAMA_HOSTS
-from itertools import cycle
+from config.settings import OLLAMA_MODEL, OLLAMA_URL
 
 class LLMClient:
     def __init__(self, model=OLLAMA_MODEL):
         self.model = model
-        self.hosts = cycle(OLLAMA_HOSTS)
+        self.host = OLLAMA_URL
 
     def get_client(self):
-        host = next(self.hosts)
-        return ollama.Client(host=host)
+        return ollama.Client(host=self.host)
 
     def generate_response(self, prompt, system_prompt=None, json_mode=False):
         """
