@@ -40,13 +40,30 @@ MAInr (Mining Agent for SRA) es una herramienta avanzada diseñada para buscar, 
     ```
 
 ## Configuración
-
-El archivo `config/settings.py` contiene las configuraciones principales:
-
-*   **ENTREZ_EMAIL**: Tu correo electrónico para el uso de la API de NCBI (Requerido por NCBI).
-*   **ENTREZ_API_KEY**: Tu clave API de NCBI (Opcional pero recomendada para mayores límites de velocidad).
-*   **OLLAMA_MODEL**: El modelo de Ollama a utilizar.
-*   **OLLAMA_HOSTS**: Lista de hosts de Ollama. Soporta múltiples hosts para balanceo de carga si tienes varias GPUs.
+ 
+### Credenciales NCBI Entrez
+ 
+Para usar la API de NCBI, necesitas proporcionar un correo electrónico (requerido) y opcionalmente una API Key. Puedes hacerlo de dos formas:
+ 
+1.  **Variables de Entorno**:
+    Establece las variables `ENTREZ_EMAIL` y `ENTREZ_API_KEY` en tu sistema.
+    ```bash
+    export ENTREZ_EMAIL="tu_email@ejemplo.com"
+    export ENTREZ_API_KEY="tu_api_key"
+    ```
+ 
+2.  **Argumentos de Línea de Comandos**:
+    Pásalos al ejecutar el script:
+    ```bash
+    python3 mainr.py --email "tu_email@ejemplo.com" --api-key "tu_api_key" ...
+    ```
+ 
+### Otras Configuraciones
+ 
+El archivo `config/settings.py` contiene otras configuraciones por defecto que pueden ser sobreescritas por variables de entorno o modificando el archivo:
+ 
+*   **OLLAMA_MODEL**: El modelo de Ollama a utilizar (default: `qwen2.5:14b`).
+*   **OLLAMA_URL**: URL de la instancia de Ollama (default: `http://localhost:11434`).
 *   **TARGET_PROJECTS**: Número objetivo de proyectos únicos a recuperar.
 *   **BATCH_SIZE**: Tamaño del lote para las búsquedas en SRA.
 

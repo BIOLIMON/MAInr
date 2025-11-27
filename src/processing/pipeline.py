@@ -13,7 +13,7 @@ class Pipeline:
         """
         Núcleo 1: Generar consulta de búsqueda SRA usando Mistral.
         """
-        print(f"🧠 Generando consulta de búsqueda para el tema: {topic}...")
+        print(f"Generando consulta de busqueda para el tema: {topic}...")
         
         keywords = topic
         
@@ -67,11 +67,11 @@ Devuelve SOLO el JSON.
                 else:
                     raise ValueError("No se encontró bloque JSON")
             except Exception as e:
-                print(f"❌ Error analizando JSON de consulta: {e}")
+                print(f"Error analizando JSON de consulta: {e}")
                 print(f"Respuesta cruda: {response}")
                 return None
 
-        print(f"📄 Consulta Natural: {data.get('natural_query')}")
+        print(f"Consulta Natural: {data.get('natural_query')}")
         return data.get('esearch_query')
 
     def analyze_bioproject(self, metadata):
@@ -97,7 +97,7 @@ Devuelve SOLO el JSON.
         try:
             return json.loads(response)
         except:
-            print(f"⚠️ Falló el análisis de la respuesta JSON del LLM para {metadata.get('bioproject')}")
+            print(f"Fallo el analisis de la respuesta JSON del LLM para {metadata.get('bioproject')}")
             return {}
 
     def run(self, topic, max_workers=15):
@@ -107,23 +107,23 @@ Devuelve SOLO el JSON.
         # 1. Generar Consulta
         query = self.generate_query(topic)
         if not query:
-            print("❌ Falló la generación de la consulta.")
+            print("Fallo la generacion de la consulta.")
             return
         
-        print(f"📝 Consulta Generada: {query}")
+        print(f"Consulta Generada: {query}")
         
         # Bucle de Paginación
         retstart = 0
         total_found = 0
         
         while len(self.bioprojects_seen) < TARGET_PROJECTS:
-            print(f"\n🔄 Obteniendo lote comenzando en {retstart} (Objetivo Proyectos Únicos: {TARGET_PROJECTS})...")
+            print(f"\nObteniendo lote comenzando en {retstart} (Objetivo Proyectos Unicos: {TARGET_PROJECTS})...")
             
             # 2. Buscar en SRA (Lote)
             search_result = search_sra(query, retstart=retstart, retmax=BATCH_SIZE)
             
             if not search_result or 'IdList' not in search_result:
-                print("❌ La búsqueda falló o no hay más resultados.")
+                print("La busqueda fallo o no hay mas resultados.")
                 break
                 
             id_list = search_result['IdList']
@@ -131,10 +131,10 @@ Devuelve SOLO el JSON.
             total_found = count
             
             if not id_list:
-                print("⚠️ No se devolvieron más IDs en este lote.")
+                print("No se devolvieron mas IDs en este lote.")
                 break
                 
-            print(f"📊 El lote contiene {len(id_list)} registros. Total disponible: {count}")
+            print(f"El lote contiene {len(id_list)} registros. Total disponible: {count}")
 
             # 3. Procesar y Filtrar en Sub-Lotes
             # Obtener resúmenes en trozos de 200 para evitar problemas de longitud de URL o tiempos de espera
@@ -143,7 +143,7 @@ Devuelve SOLO el JSON.
             
             for i in range(0, len(id_list), chunk_size):
                 chunk_ids = id_list[i:i+chunk_size]
-                print(f"   📥 Obteniendo resúmenes para registros {i}-{i+len(chunk_ids)}...")
+                print(f"   Obteniendo resumenes para registros {i}-{i+len(chunk_ids)}...")
                 
                 summary_list = fetch_summary(chunk_ids)
                 if not summary_list:
@@ -173,11 +173,11 @@ Devuelve SOLO el JSON.
                 if len(self.bioprojects_seen) >= TARGET_PROJECTS:
                     break
 
-            print(f"   ✨ Encontrados {len(new_unique_records)} nuevos BioProjects únicos en este lote.")
+            print(f"   Encontrados {len(new_unique_records)} nuevos BioProjects unicos en este lote.")
 
             # 4. Análisis LLM Paralelo
             if new_unique_records:
-                print(f"   🤖 Analizando {len(new_unique_records)} proyectos en paralelo con {max_workers} hilos...")
+                print(f"   Analizando {len(new_unique_records)} proyectos en paralelo con {max_workers} hilos...")
                 
                 with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
                     future_to_meta = {executor.submit(self.analyze_bioproject, meta): meta for meta in new_unique_records}
@@ -188,18 +188,18 @@ Devuelve SOLO el JSON.
                             analysis = future.result()
                             full_record = {**meta, **analysis}
                             self.results.append(full_record)
-                            print(f"      ✅ Analizado: {meta.get('bioproject')}")
+                            print(f"      Analizado: {meta.get('bioproject')}")
                         except Exception as exc:
-                            print(f"      ❌ Error analizando {meta.get('bioproject')}: {exc}")
+                            print(f"      Error analizando {meta.get('bioproject')}: {exc}")
 
             # Verificar si procesamos todos los resultados disponibles
             if retstart + len(id_list) >= count:
-                print("🏁 Se alcanzó el final de los resultados de búsqueda.")
+                print("Se alcanzo el final de los resultados de busqueda.")
                 break
                 
             # Verificar si alcanzamos el objetivo
             if len(self.bioprojects_seen) >= TARGET_PROJECTS:
-                print(f"🎉 ¡Objetivo de {TARGET_PROJECTS} BioProjects únicos alcanzado!")
+                print(f"Objetivo de {TARGET_PROJECTS} BioProjects unicos alcanzado!")
                 break
                 
             # Mover al siguiente lote

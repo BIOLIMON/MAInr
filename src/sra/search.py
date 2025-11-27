@@ -8,7 +8,7 @@ def search_sra(query, retstart=0, retmax=BATCH_SIZE):
     """
     Busca en la base de datos SRA y devuelve la lista de IDs.
     """
-    print(f"🔍 Buscando en SRA: {query} (Lote: {retstart}-{retstart+retmax})")
+    print(f"Buscando en SRA: {query} (Lote: {retstart}-{retstart+retmax})")
     try:
         handle = Entrez.esearch(
             db="sra",
@@ -20,7 +20,7 @@ def search_sra(query, retstart=0, retmax=BATCH_SIZE):
         handle.close()
         return results
     except Exception as e:
-        print(f"❌ Error buscando en SRA: {e}")
+        print(f"Error buscando en SRA: {e}")
         return None
 
 def fetch_summary(id_list):
@@ -37,5 +37,5 @@ def fetch_summary(id_list):
         handle.close()
         return summary
     except Exception as e:
-        print(f"❌ Error obteniendo resumen para ID {id_list}: {e}")
+        print(f"Error obteniendo resumen para ID {id_list}: {e}")
         return None

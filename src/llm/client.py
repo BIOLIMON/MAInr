@@ -41,5 +41,5 @@ class LLMClient:
             response = client.chat(**kwargs)
             return response['message']['content']
         except Exception as e:
-            print(f"❌ Error comunicándose con el LLM: {e}")
+            print(f"Error comunicandose con el LLM: {e}")
             return None

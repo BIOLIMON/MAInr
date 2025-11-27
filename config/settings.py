@@ -1,8 +1,8 @@
 import os
 
 # Configuración de Entrez
-ENTREZ_EMAIL = ""
-ENTREZ_API_KEY = ""
+ENTREZ_EMAIL = os.getenv("ENTREZ_EMAIL", "")
+ENTREZ_API_KEY = os.getenv("ENTREZ_API_KEY", "")
 
 # Configuración del LLM
 OLLAMA_MODEL = "qwen2.5:14b"
