@@ -157,6 +157,10 @@ def parse_sra_full_xml(xml_content):
         # Combined text for LLM
         data['full_text'] = f"Title: {data.get('study_title', '')}\nAbstract: {data.get('study_abstract', '')}\nDesign: {data.get('design_description', '')}\nOrganism: {data.get('organism', '')}\nStrategy: {data.get('library_strategy', '')}"
         
+        # Ensure 'title' is present (alias for study_title) for consistency with mainr.py
+        if 'title' not in data:
+            data['title'] = data.get('study_title', '')
+
         results.append(data)
         
     return results

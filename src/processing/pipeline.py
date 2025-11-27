@@ -29,30 +29,30 @@ class Pipeline:
             expansion_text = "\nSYNONYM SUGGESTIONS (Use if applicable):\n" + "\n".join(expanded_concepts) + "\n"
         
         prompt = f"""
-Eres un asistente experto en bioinformática especializado en minería de datos de NCBI SRA.
-Tu objetivo es generar una estrategia de búsqueda de **ALTO RECALL** (alta recuperación) para el tema: "{keywords}".
+You are an expert bioinformatics assistant specialized in NCBI SRA data mining.
+Your goal is to generate a **HIGH RECALL** search strategy for the topic: "{keywords}".
 
 {expansion_text}
-Queremos encontrar la MAYOR cantidad posible de estudios relevantes, incluso si eso implica algo de ruido.
-Es preferible traer 10,000 resultados y filtrar después, que traer 0 por ser demasiado específico.
+We want to find the LARGEST possible amount of relevant studies, even if it implies some noise.
+It is preferable to retrieve 10,000 results and filter later, than to retrieve 0 by being too specific.
 
-IMPORTANTE: Debes devolver la respuesta en formato JSON VÁLIDO.
-Ten mucho cuidado con las comillas dentro de la query. Si usas comillas dobles dentro de la string de la query, DEBES escaparlas con backslash (\").
+IMPORTANT: You must return the response in VALID JSON format.
+Be very careful with quotes inside the query. If you use double quotes inside the query string, you MUST escape them with a backslash (\").
 
-Reglas para ALTO RECALL:
-1. **Usa [All Fields] generosamente**: Si un término no es estrictamente un organismo o estrategia, úsalo en [All Fields].
-2. **Evita ANDs innecesarios**: No conectes todos los conceptos con AND. Si el usuario pide "sequía en tomate y pimiento", usa OR para los organismos.
-3. **Expande sinónimos**: Usa OR para variantes (ej: "drought" OR "water stress" OR "water deficit").
-4. **Organismos**: Identifica el nombre científico pero incluye también el nombre común en [All Fields] (ej: "Solanum lycopersicum"[Organism] OR "tomato"[All Fields]).
-5. **Estrategia**: Si el usuario menciona una técnica (ej: RNA-Seq), úsala, pero incluye variantes (ej: "RNA-Seq"[Strategy] OR "transcriptome"[All Fields]).
+Rules for HIGH RECALL:
+1. **Use [All Fields] generously**: If a term is not strictly an organism or strategy, use it in [All Fields].
+2. **Avoid unnecessary ANDs**: Do not connect all concepts with AND. If the user asks for "drought in tomato and pepper", use OR for the organisms.
+3. **Expand synonyms**: Use OR for variants (e.g., "drought" OR "water stress" OR "water deficit").
+4. **Organisms**: Identify the scientific name but also include the common name in [All Fields] (e.g., "Solanum lycopersicum"[Organism] OR "tomato"[All Fields]).
+5. **Strategy**: If the user mentions a technique (e.g., RNA-Seq), use it, but include variants (e.g., "RNA-Seq"[Strategy] OR "transcriptome"[All Fields]).
 
-Ejemplo de salida válida:
+Example of valid output:
 {{
-  "natural_query": "Búsqueda amplia de RNA-Seq en tomate o pimiento bajo estrés hídrico",
+  "natural_query": "Broad search for RNA-Seq in tomato or pepper under water stress",
   "esearch_query": "(\\\"Solanum lycopersicum\\\"[Organism] OR \\\"tomato\\\"[All Fields]) AND (\\\"drought\\\"[All Fields] OR \\\"water stress\\\"[All Fields])"
 }}
 
-Devuelve SOLO el JSON.
+Return ONLY the JSON.
 """
         
         # Disable strict json mode to handle complex escapes manually if needed

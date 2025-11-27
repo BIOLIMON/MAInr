@@ -41,6 +41,29 @@ def main():
         os.makedirs(args.output_dir)
         print(f"Directory created: {args.output_dir}")
     
+    # --- Multi-GPU Cluster Automation ---
+    from src.utils.gpu import get_gpu_count, OllamaCluster
+    import atexit
+    
+    # Check if OLLAMA_URL is already set by user
+    if not os.getenv("OLLAMA_URL"):
+        gpu_count = get_gpu_count()
+        if gpu_count > 1:
+            print(f"\n[Auto-Cluster] Detected {gpu_count} GPUs. Launching optimized Ollama cluster...")
+            cluster = OllamaCluster()
+            urls = cluster.start()
+            
+            if urls:
+                # Set environment variable for this process and children
+                os.environ["OLLAMA_URL"] = ",".join(urls)
+                print(f"[Auto-Cluster] Cluster active at: {os.environ['OLLAMA_URL']}")
+                
+                # Register cleanup
+                atexit.register(cluster.stop)
+            else:
+                print("[Auto-Cluster] Failed to start cluster. Using default configuration.")
+    # ------------------------------------
+    
     # Hardware Detection and Configuration
     from src.utils.hardware import get_gpu_info, estimate_max_workers
     
