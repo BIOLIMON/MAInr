@@ -76,6 +76,7 @@ def main():
         print("No NVIDIA GPUs detected via nvidia-smi. Using CPU or default settings.")
         
     print(f"Using {num_workers} concurrent workers.")
+    print("Tip: Ensure your Ollama server is running with OLLAMA_NUM_PARALLEL set to at least this number for maximum throughput.")
 
     pipeline = Pipeline(ollama_threads=args.ollama_threads)
     results = pipeline.run(topic, max_workers=num_workers)
