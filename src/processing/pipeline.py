@@ -1,8 +1,9 @@
 import json
 from Bio import Entrez
 from src.llm.client import LLMClient
-from src.sra.search import search_sra, fetch_summary, safe_esearch
-from src.utils.xml_parser import parse_sra_xml
+from src.sra.search import search_sra, fetch_summary, fetch_details, safe_esearch
+from src.sra.search import search_sra, fetch_summary, fetch_details, safe_esearch
+from src.utils.xml_parser import parse_sra_xml, parse_sra_full_xml
 
 class Pipeline:
     def __init__(self, ollama_threads=None):
@@ -118,7 +119,11 @@ Devuelve SOLO el JSON.
         metadata = self.enrich_metadata(metadata)
         
         # Build text representation for LLM
-        text_data = "\n".join([f"{k}: {v}" for k, v in metadata.items()])
+        # Use full_text if available (from fetch_details), otherwise fall back
+        if 'full_text' in metadata:
+            text_data = metadata['full_text']
+        else:
+            text_data = "\n".join([f"{k}: {v}" for k, v in metadata.items()])
         
         system_prompt, user_prompt = get_analysis_prompt(text_data)
         
@@ -167,35 +172,39 @@ Devuelve SOLO el JSON.
             print(f"Batch contains {len(id_list)} records. Total available: {count}")
 
             # 3. Process and Filter in Sub-Batches
-            # Fetch summaries in chunks of 200 to avoid URL length issues or timeouts
-            chunk_size = 200
+            # Fetch details (full XML) in chunks of 50 (efetch is heavier than esummary)
+            chunk_size = 50
             new_unique_records = []
             
             for i in range(0, len(id_list), chunk_size):
                 chunk_ids = id_list[i:i+chunk_size]
-                print(f"   Fetching summaries for records {i}-{i+len(chunk_ids)}...")
+                print(f"   Fetching details for records {i}-{i+len(chunk_ids)}...")
                 
-                summary_list = fetch_summary(chunk_ids)
-                if not summary_list:
+                try:
+                    xml_content = fetch_details(chunk_ids)
+                except Exception as e:
+                    print(f"   Error fetching details batch: {e}")
+                    continue
+
+                if not xml_content:
                     continue
                 
-                for study_summary in summary_list:
-                    if "ExpXml" not in study_summary:
-                        continue
+                # Parse XML string to list of dicts
+                details_list = parse_sra_full_xml(xml_content)
 
-                    # Parse XML
-                    runs_xml = study_summary.get("Runs", None)
-                    metadata = parse_sra_xml(study_summary["ExpXml"], runs_xml_string=runs_xml)
+                for metadata in details_list:
                     if not metadata:
                         continue
 
                     bioproject = metadata.get('bioproject')
                     
                     # Filter: Unique BioProjects
-                    if bioproject in self.bioprojects_seen:
+                    if bioproject and bioproject in self.bioprojects_seen:
                         continue
                     
-                    self.bioprojects_seen.add(bioproject)
+                    if bioproject:
+                        self.bioprojects_seen.add(bioproject)
+                    
                     new_unique_records.append(metadata)
                     
                     if len(self.bioprojects_seen) >= TARGET_PROJECTS:

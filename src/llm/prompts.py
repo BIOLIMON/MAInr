@@ -15,6 +15,10 @@ Return a VALID JSON object with the following keys:
     - If it is NOT a time series, return 0.0.
 - "library_count_stated": Integer number of libraries/samples that the text SAYS were sequenced (e.g., "we sequenced 12 libraries"). If not explicitly mentioned, return null.
 - "experiment_count_stated": Integer number of distinct conditions or experiments mentioned.
+- "study_design": Classify the study design. Options: "Case-Control", "Time Series", "Dose Response", "Developmental", "Genotype Comparison", "Other".
+- "stress_condition": The specific stress or condition studied (e.g., "Drought", "Heat", "Salinity", "Control", "None").
+- "sequencing_target": The molecule sequenced (e.g., "mRNA", "Small RNA", "Total RNA", "DNA", "Unknown").
+- "relevance_score": A score from 1 to 10 indicating how relevant this study is for understanding plant stress responses (1=Irrelevant, 10=Highly Relevant).
 - "summary": A concise 1-sentence summary in English about the study's objective.
 """
 

@@ -72,3 +72,24 @@ def fetch_summary(id_list):
     except Exception as e:
         print(f"Error fetching summary for IDs (failed attempt): {e}")
         raise # Re-raise for tenacity to catch
+
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=4, max=60),
+    retry=retry_if_exception_type((urllib.error.URLError, urllib.error.HTTPError, RuntimeError))
+)
+def fetch_details(id_list):
+    """
+    Fetches full details for a list of IDs using efetch.
+    Provides more information than fetch_summary.
+    """
+    try:
+        # rettype="full" and retmode="xml" retrieves the complete record
+        handle = Entrez.efetch(db="sra", id=id_list, rettype="full", retmode="xml")
+        results = handle.read() # Return raw XML string
+        handle.close()
+        return results
+    except Exception as e:
+        print(f"Error fetching details for IDs (failed attempt): {e}")
+        raise
+
