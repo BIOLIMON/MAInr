@@ -2,9 +2,10 @@ import ollama
 from config.settings import OLLAMA_MODEL, OLLAMA_URL
 
 class LLMClient:
-    def __init__(self, model=OLLAMA_MODEL):
+    def __init__(self, model=OLLAMA_MODEL, num_threads=None):
         self.model = model
         self.host = OLLAMA_URL
+        self.num_threads = num_threads
 
     def get_client(self):
         return ollama.Client(host=self.host)
@@ -20,6 +21,8 @@ class LLMClient:
         messages.append({'role': 'user', 'content': prompt})
 
         options = {'temperature': 0.1}
+        if self.num_threads:
+            options['num_thread'] = self.num_threads
         
         # Nota: El cliente python de Ollama podría manejar format='json' de manera diferente dependiendo de la versión.
         # Por ahora confiaremos en el prompt para solicitar JSON si es necesario,

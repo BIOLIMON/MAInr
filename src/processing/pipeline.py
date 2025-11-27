@@ -4,8 +4,8 @@ from src.sra.search import search_sra, fetch_summary
 from src.utils.xml_parser import parse_sra_xml
 
 class Pipeline:
-    def __init__(self):
-        self.llm = LLMClient()
+    def __init__(self, ollama_threads=None):
+        self.llm = LLMClient(num_threads=ollama_threads)
         self.bioprojects_seen = set()
         self.results = []
 
@@ -100,7 +100,7 @@ Devuelve SOLO el JSON.
             print(f"⚠️ Falló el análisis de la respuesta JSON del LLM para {metadata.get('bioproject')}")
             return {}
 
-    def run(self, topic):
+    def run(self, topic, max_workers=15):
         from config.settings import TARGET_PROJECTS, BATCH_SIZE
         import concurrent.futures
         
@@ -177,9 +177,9 @@ Devuelve SOLO el JSON.
 
             # 4. Análisis LLM Paralelo
             if new_unique_records:
-                print(f"   🤖 Analizando {len(new_unique_records)} proyectos en paralelo...")
+                print(f"   🤖 Analizando {len(new_unique_records)} proyectos en paralelo con {max_workers} hilos...")
                 
-                with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
                     future_to_meta = {executor.submit(self.analyze_bioproject, meta): meta for meta in new_unique_records}
                     
                     for future in concurrent.futures.as_completed(future_to_meta):

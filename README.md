@@ -51,18 +51,40 @@ El archivo `config/settings.py` contiene las configuraciones principales:
 *   **BATCH_SIZE**: Tamaño del lote para las búsquedas en SRA.
 
 ## Uso
-
-Ejecuta el script principal:
-
-```bash
-python main.py
-```
-
-El sistema te pedirá que introduzcas un tema de investigación (por ejemplo, "drought stress in tomato"). MAInr generará automáticamente una consulta de búsqueda, recuperará los datos de SRA, analizará los metadatos y guardará los resultados en un archivo CSV (ej. `MAInr_results_drought_stress_in_tomato.csv`).
-
-## Estructura del Proyecto
-
-*   `main.py`: Punto de entrada de la aplicación.
+ 
+ Ejecuta el script principal desde la terminal pasando los argumentos necesarios:
+ 
+ ```bash
+ python3 mainr.py "tema de investigación" [opciones]
+ ```
+ 
+ ### Argumentos
+ 
+ *   `topic`: El tema de investigación (ej. "drought stress in tomato"). Si no se proporciona, el sistema lo pedirá interactivamente.
+ *   `-O`, `--output-dir`: Directorio donde se guardarán los resultados (por defecto: directorio actual).
+ *   `-n`, `--num-workers`: Número de hilos para el procesamiento paralelo de análisis (por defecto: 15).
+ *   `-t`, `--ollama-threads`: Número de hilos que utilizará Ollama para la inferencia (opcional).
+ 
+ ### Ejemplos
+ 
+ **Uso básico:**
+ ```bash
+ python3 mainr.py "drought stress in tomato"
+ ```
+ 
+ **Especificando directorio de salida y más hilos de trabajo:**
+ ```bash
+ python3 mainr.py "heat stress in arabidopsis" -O ./resultados -n 20
+ ```
+ 
+ **Controlando hilos de Ollama:**
+ ```bash
+ python3 mainr.py "cold stress in maize" -t 4
+ ```
+ 
+ ## Estructura del Proyecto
+ 
+ *   `mainr.py`: Punto de entrada de la aplicación (CLI).
 *   `config/`: Archivos de configuración.
 *   `src/`: Código fuente.
     *   `llm/`: Cliente para interactuar con Ollama.
