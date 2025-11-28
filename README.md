@@ -12,6 +12,10 @@ MAInr (Mining Agent for SRA) is an advanced tool designed to search, extract, an
 *   **Parallel Processing**: Uses threads to analyze multiple projects simultaneously, speeding up the mining process.
 *   **Hardware Detection**: Automatically detects available GPUs and recommends optimal concurrency settings.
 *   **Structured Output**: Generates CSV files with all collected and analyzed information ready for use.
+*   **Professional Logging**: Comprehensive logging system with colored console output and file logging for debugging.
+*   **Progress Tracking**: Real-time progress bars using tqdm for better visibility into pipeline status.
+*   **Robust Error Handling**: Comprehensive exception handling with automatic retries and graceful degradation.
+*   **Type Safety**: Full type hints throughout the codebase for better IDE support and fewer runtime errors.
 
 ## Requirements
 
@@ -135,6 +139,54 @@ The generated CSV file contains the following key columns:
 *   **total_bases**: Total number of bases sequenced.
 
 You can find a sample output file here: [examples/example_output.csv](examples/example_output.csv)
+
+## Recent Improvements
+
+This codebase has undergone comprehensive improvements focused on code quality, reliability, and user experience:
+
+### Code Quality
+- ✅ Professional logging system with colored output
+- ✅ Full type hints across all modules
+- ✅ Comprehensive docstrings (Google style)
+- ✅ Centralized constants module
+- ✅ Improved error handling with specific exception types
+- ✅ Progress bars for long-running operations
+
+### Reliability
+- ✅ Input validation and safe value clamping
+- ✅ Health checks for Ollama cluster
+- ✅ Automatic retry logic with exponential backoff
+- ✅ Better configuration with reasonable defaults
+
+### Developer Experience
+- ✅ Versioned dependencies for reproducibility
+- ✅ Additional test suites (LLM client, hardware detection)
+- ✅ Comprehensive documentation (CHANGELOG.md, IMPROVEMENTS.md)
+- ✅ Better CLI with examples and verbose mode
+
+See [IMPROVEMENTS.md](IMPROVEMENTS.md) and [CHANGELOG.md](CHANGELOG.md) for detailed information.
+
+## Troubleshooting
+
+### Common Issues
+
+**Issue: "Email is required to use NCBI Entrez"**
+- Solution: Set the `ENTREZ_EMAIL` environment variable or use `--email` flag
+
+**Issue: "All LLM hosts failed"**
+- Solution: Ensure Ollama is running (`ollama serve`) and the model is pulled (`ollama pull qwen2.5:14b`)
+- Check logs in `logs/mainr.log` for detailed error messages
+
+**Issue: "No GPUs detected"**
+- Solution: This is normal if running on CPU. The tool will work but may be slower.
+- If you have GPUs, ensure `nvidia-smi` is available
+
+**Verbose Mode:**
+```bash
+python3 mainr.py "your topic" -v
+```
+
+Check `logs/mainr.log` for detailed execution logs.
 
 ## Contribution
 

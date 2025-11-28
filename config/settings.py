@@ -1,16 +1,23 @@
-import os
+"""
+Configuration settings for MAInr.
 
-# Entrez Configuration
+This module provides default configuration values that can be overridden
+via environment variables or command-line arguments.
+"""
+
+import os
+from src.constants import PipelineDefaults, OllamaDefaults, NCBILimits
+
+# NCBI Entrez Configuration
 ENTREZ_EMAIL = os.getenv("ENTREZ_EMAIL", "")
 ENTREZ_API_KEY = os.getenv("ENTREZ_API_KEY", "")
 
 # LLM Configuration
-# LLM Configuration
-OLLAMA_MODEL = "qwen2.5:14b"
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", OllamaDefaults.DEFAULT_MODEL)
 # Support comma-separated URLs for multi-GPU setups
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-
+OLLAMA_URL = os.getenv("OLLAMA_URL", OllamaDefaults.DEFAULT_URL)
 
 # Search Configuration
-TARGET_PROJECTS = 100000  # Goal: effectively unlimited
-BATCH_SIZE = 10000        # Fetch large blocks at once
+# Using more reasonable defaults - can be overridden
+TARGET_PROJECTS = int(os.getenv("TARGET_PROJECTS", PipelineDefaults.DEFAULT_TARGET_PROJECTS))
+BATCH_SIZE = int(os.getenv("BATCH_SIZE", NCBILimits.RECOMMENDED_BATCH_SIZE))

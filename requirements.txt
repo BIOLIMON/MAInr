@@ -1,4 +1,23 @@
-biopython
-ollama
-pandas
-tenacity
+# Core dependencies
+biopython>=1.81,<2.0
+pandas>=2.0.0,<3.0
+ollama>=0.1.0,<1.0
+
+# Retry and resilience
+tenacity>=8.2.0,<9.0
+
+# Progress bars
+tqdm>=4.65.0,<5.0
+
+# HTTP requests (for health checks)
+requests>=2.31.0,<3.0
+
+# Configuration validation (optional but recommended)
+pydantic>=2.0.0,<3.0
+pyyaml>=6.0,<7.0
+
+# Development dependencies (optional)
+# pytest>=7.4.0,<8.0
+# pytest-cov>=4.1.0,<5.0
+# black>=23.0.0,<24.0
+# mypy>=1.5.0,<2.0
